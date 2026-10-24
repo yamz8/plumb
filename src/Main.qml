@@ -664,14 +664,12 @@ ApplicationWindow {
 
         ScaleDialog {
             id: scaleDialog
-            objectName: "scaleDialog"
             sheet: backend.sheet
             onCalibrateRequested: win.pickTool("calibrate")
         }
 
         ItemDialog {
             id: itemDialog
-            objectName: "itemDialog"
             onCreated: (id) => {
                 win.activeItem = id
                 win.pickTool("measure")
@@ -682,7 +680,6 @@ ApplicationWindow {
         // changed. The takeoff itself is saved; the CSV may be behind.
         Dialog {
             id: quitDialog
-            objectName: "quitDialog"
             title: qsTr("Export the quantities first?")
             modal: true
             anchors.centerIn: parent
