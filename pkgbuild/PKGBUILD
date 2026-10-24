@@ -1,0 +1,25 @@
+pkgname=plumb
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='Quantity takeoff on construction drawings: lengths, areas, and counts to CSV'
+arch=('x86_64' 'aarch64')
+url='https://github.com/yamz8/plumb'
+license=('MIT')
+# Qt PDF ships in qt6-webengine on Arch.
+depends=('qt6-base' 'qt6-declarative' 'qt6-wayland' 'qt6-webengine' 'xdg-desktop-portal')
+makedepends=('gcc' 'make')
+source=()
+sha256sums=()
+
+build() {
+  cd "$startdir/.."
+  ./bin/build
+}
+
+package() {
+  cd "$startdir/.."
+  install -Dm755 build/plumb "$pkgdir/usr/bin/plumb"
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 "$startdir/plumb.svg" "$pkgdir/usr/share/icons/hicolor/scalable/apps/plumb.svg"
+  install -Dm644 "$startdir/plumb.desktop" "$pkgdir/usr/share/applications/plumb.desktop"
+}

@@ -1,0 +1,22 @@
+{
+  "%n measurements": {
+    "one": "%n measurement",
+    "other": "%n measurements"
+  },
+  "Hidden · %n measurements": {
+    "one": "Hidden · %n measurement",
+    "other": "Hidden · %n measurements"
+  },
+  "%n measurements sit on sheets with no scale and aren't in the totals.": {
+    "one": "%n measurement sits on a sheet with no scale and isn't in the totals.",
+    "other": "%n measurements sit on sheets with no scale and aren't in the totals."
+  },
+  "Delete it and its %n measurements?": {
+    "one": "Delete it and its measurement?",
+    "other": "Delete it and its %n measurements?"
+  },
+  "%n not counted: no scale": {
+    "one": "%n not counted: no scale",
+    "other": "%n not counted: no scale"
+  }
+}
