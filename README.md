@@ -29,7 +29,9 @@ across the set, ready to export to CSV.
   them.
 - **Saves as you go**, with undo, in `~/.local/share/plumb/takeoffs/`, keyed
   by the PDF's contents, so the takeoff follows the drawing when it's moved
-  or renamed. The PDF itself is never changed.
+  or renamed. The PDF itself is never changed. A revised drawing is a new
+  PDF, so it starts a new takeoff; the earlier one stays with the earlier
+  PDF.
 - Follows the Omarchy theme accent, window rounding, and language live.
 
 ## Usage
@@ -104,4 +106,4 @@ bin/install    # builds and installs the package, so Plumb is in the app launche
 
 MIT. The theme and portal file picker code follows
 [Omacut](https://github.com/omacom-io/omacut) by David Heinemeier Hansson, also MIT.
-The drawing viewer follows Lintel's.
+The drawing viewer follows [Lintel](https://github.com/yamz8/lintel)'s.
