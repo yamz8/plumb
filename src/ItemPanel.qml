@@ -179,7 +179,9 @@ Rectangle {
                                     font.pixelSize: 13
                                     color: row.modelData.visible ? "#ececf0" : "#8a8a94"
                                     Layout.fillWidth: true
-                                    Layout.maximumWidth: implicitWidth
+                                    // Rounded up: layouts place items on whole pixels, and
+                                    // a width a fraction short of the text elides it.
+                                    Layout.maximumWidth: Math.ceil(implicitWidth)
                                 }
                                 Label {
                                     visible: row.modelData.key !== ""
