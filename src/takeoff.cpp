@@ -578,36 +578,88 @@ void Takeoff::calibrate(int sheet, qreal points, double length, const QString &u
     setScale(sheet, points / length, unit, tr("Calibrated"), allSheets);
 }
 
+namespace {
+
+// A number as typed: commas and points sorted into thousands separators and
+// a decimal point, or an empty string when it can't be told which is which.
+QString plainDecimal(QString value, bool commaThousandsLikely) {
+    const int comma = value.lastIndexOf(','), point = value.lastIndexOf('.');
+    if (comma >= 0 && point >= 0) {
+        // Both: whichever comes last is the decimal mark (1,200.5 and 1.200,5).
+        value.remove(comma > point ? '.' : ',');
+        return value.replace(',', '.');
+    }
+    static const QRegularExpression grouped("\\d{1,3}(?:,\\d{3})+(?!\\d)");
+    static const QRegularExpression oneGroup("^\\D*\\d{1,3},\\d{3}(?!\\d)");
+    if (comma >= 0 && grouped.match(value).hasMatch()) {
+        // 1,200 is a thousand two hundred in feet, but 1.2 meters to half of
+        // Europe; a wrong guess would scale every quantity by a thousand.
+        if (!commaThousandsLikely && oneGroup.match(value).hasMatch() && value.count(',') == 1)
+            return {};
+        return value.remove(',');
+    }
+    return value.replace(',', '.');
+}
+
+// A whole number, a decimal, or a fraction of one: 6, 6.5, 6 1/2, 6-1/2, 1/2.
+const QString numberPattern = "(\\d+(?:\\.\\d+)?(?:[ -]+\\d+/\\d+)?|\\d+/\\d+)";
+
+double numberValue(const QString &text) {
+    static const QRegularExpression parts("^(?:(\\d+(?:\\.\\d+)?)(?:[ -]+)?)?(?:(\\d+)/(\\d+))?$");
+    const auto match = parts.match(text.trimmed());
+    if (!match.hasMatch())
+        return -1;
+    double value = match.captured(1).toDouble();
+    if (!match.captured(2).isEmpty()) {
+        const double denominator = match.captured(3).toDouble();
+        if (denominator <= 0)
+            return -1;
+        value += match.captured(2).toDouble() / denominator;
+    }
+    return value;
+}
+
+}
+
 double Takeoff::parseLength(const QString &text, const QString &unit) {
     QString value = text.trimmed();
-    value.replace(',', '.');
-    bool ok = false;
+    // Lengths pasted from a PDF or typed on a phone come with typographic
+    // marks and fraction characters.
+    for (const auto &[from, to] : std::initializer_list<std::pair<QString, QString>>{
+             {"’", "'"}, {"′", "'"}, {"‘", "'"}, {"”", "\""}, {"″", "\""}, {"“", "\""},
+             {"½", " 1/2"}, {"¼", " 1/4"}, {"¾", " 3/4"}, {"⅛", " 1/8"}, {"⅜", " 3/8"}, {"⅝", " 5/8"}, {"⅞", " 7/8"}})
+        value.replace(from, to);
+    value = plainDecimal(value, unit != "m").trimmed();
+    if (value.isEmpty())
+        return -1;
+
     if (unit == "m") {
         value.remove(QRegularExpression("\\s*m$"));
+        bool ok = false;
         const double meters = value.toDouble(&ok);
         return ok && meters > 0 ? meters : -1;
     }
-    // Feet and inches, either part optional, inches possibly fractional.
-    static const QRegularExpression imperial(
-        "^(?:(\\d+(?:\\.\\d+)?)\\s*(?:'|ft)?)?\\s*-?\\s*(?:(\\d+(?:\\.\\d+)?)\\s*(?:\"|in))?$");
-    if (value.contains('\'') || value.contains('"') || value.contains("ft") || value.contains("in")) {
-        // A number with only an inch mark is all inches.
-        if (!value.contains('\'') && !value.contains("ft")) {
-            QString inches = value;
-            inches.remove(QRegularExpression("\\s*(\"|in)$"));
-            const double total = inches.toDouble(&ok) / 12;
-            return ok && total > 0 ? total : -1;
-        }
-        const auto match = imperial.match(value);
-        if (!match.hasMatch() || (match.captured(1).isEmpty() && match.captured(2).isEmpty()))
-            return -1;
-        const double feet = match.captured(1).toDouble();
-        const double inches = match.captured(2).toDouble();
-        const double total = feet + inches / 12;
-        return total > 0 ? total : -1;
+
+    // Feet and inches, either part optional, inches possibly fractional:
+    // 12'-6 1/2", 12' 6, 12 ft 6 in, 150", 6-1/2", 12.5.
+    static const QRegularExpression feetAndInches(
+        "^" + numberPattern + "\\s*(?:'|ft)\\s*-?\\s*(?:" + numberPattern + "\\s*(?:\"|in)?)?$");
+    static const QRegularExpression inchesOnly("^" + numberPattern + "\\s*(?:\"|in)$");
+    static const QRegularExpression feetOnly("^" + numberPattern + "$");
+    double total = -1;
+    if (const auto match = feetAndInches.match(value); match.hasMatch()) {
+        const double feet = numberValue(match.captured(1));
+        const double inches = match.captured(2).isEmpty() ? 0 : numberValue(match.captured(2));
+        if (feet >= 0 && inches >= 0)
+            total = feet + inches / 12;
+    } else if (const auto match = inchesOnly.match(value); match.hasMatch()) {
+        const double inches = numberValue(match.captured(1));
+        if (inches >= 0)
+            total = inches / 12;
+    } else if (const auto match = feetOnly.match(value); match.hasMatch()) {
+        total = numberValue(match.captured(1));
     }
-    const double feet = value.toDouble(&ok);
-    return ok && feet > 0 ? feet : -1;
+    return total > 0 ? total : -1;
 }
 
 QVariantList Takeoff::presets() {

@@ -143,6 +143,28 @@ private slots:
         QCOMPARE(Takeoff::parseLength("3.2 m", "m"), 3.2);
         QCOMPARE(Takeoff::parseLength("twelve", "ft"), -1.0);
         QCOMPARE(Takeoff::parseLength("0", "m"), -1.0);
+
+        // Fractions of an inch, as drawings are dimensioned.
+        QCOMPARE(Takeoff::parseLength("12'-6 1/2\"", "ft"), 12.5 + 0.5 / 12);
+        QCOMPARE(Takeoff::parseLength("12'-6-1/2\"", "ft"), 12.5 + 0.5 / 12);
+        QCOMPARE(Takeoff::parseLength("6 1/2\"", "ft"), 6.5 / 12);
+        QCOMPARE(Takeoff::parseLength("3/4\"", "ft"), 0.75 / 12);
+        QCOMPARE(Takeoff::parseLength("6½\"", "ft"), 6.5 / 12);
+        QCOMPARE(Takeoff::parseLength("12' 6", "ft"), 12.5);
+        QCOMPARE(Takeoff::parseLength("12 ft 6 in", "ft"), 12.5);
+        QCOMPARE(Takeoff::parseLength("12’-6”", "ft"), 12.5);
+        QCOMPARE(Takeoff::parseLength("6/0\"", "ft"), -1.0);
+        QCOMPARE(Takeoff::parseLength("12-6", "ft"), -1.0);
+
+        // Thousands separators never shrink a length a thousandfold.
+        QCOMPARE(Takeoff::parseLength("1,200", "ft"), 1200.0);
+        QCOMPARE(Takeoff::parseLength("1,200'", "ft"), 1200.0);
+        QCOMPARE(Takeoff::parseLength("1,200.5", "ft"), 1200.5);
+        QCOMPARE(Takeoff::parseLength("12,5", "ft"), 12.5);
+        QCOMPARE(Takeoff::parseLength("1.200,5", "m"), 1200.5);
+        QCOMPARE(Takeoff::parseLength("1,200,000", "m"), 1200000.0);
+        // 1,200 meters or 1.2? Ask rather than guess.
+        QCOMPARE(Takeoff::parseLength("1,200", "m"), -1.0);
     }
 
     void presetsAreAtTheirScale()
