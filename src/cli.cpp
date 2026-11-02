@@ -10,6 +10,7 @@
 #include <QSaveFile>
 #include <QUrl>
 #include <cstdio>
+#include <sys/stat.h>
 
 #include "backend.h"
 #include "takeoff.h"
@@ -50,6 +51,14 @@ bool open(Backend &backend, Takeoff &takeoff, const QString &path) {
     if (!problem.isEmpty())
         print(stderr, problem);
     return true;
+}
+
+// Whether two paths name the same file on disk, through symlinks and hard
+// links alike, so no spelling of the drawing's path can write over it.
+bool sameFile(const QString &a, const QString &b) {
+    struct stat first, second;
+    return stat(QFile::encodeName(a).constData(), &first) == 0 && stat(QFile::encodeName(b).constData(), &second) == 0
+           && first.st_dev == second.st_dev && first.st_ino == second.st_ino;
 }
 
 double round2(double value) { return qRound64(value * 100) / 100.0; }
@@ -176,7 +185,7 @@ int exportCsv(const QStringList &arguments) {
         fputs(takeoff.toCsv(backend.sheetLabels()).toUtf8().constData(), stdout);
         return 0;
     }
-    if (QFileInfo(output).absoluteFilePath() == backend.filePath())
+    if (sameFile(output, backend.filePath()))
         return fail("Write the CSV to a new file; the drawing is never changed.");
     QString error;
     if (!takeoff.exportCsv(output, backend.sheetLabels(), &error))

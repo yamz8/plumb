@@ -7,6 +7,7 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest>
+#include <unistd.h>
 
 #include "backend.h"
 #include "cli.h"
@@ -460,6 +461,13 @@ private slots:
         QVERIFY(file.open(QIODevice::ReadOnly));
         QVERIFY(file.readAll().contains("Drywall,Length,All sheets,1,8.00,ft"));
         QCOMPARE(runCli({"plumb", "export", pdf, "-o", pdf}), 1);
+        // Nor through another name for the same file.
+        const QByteArray drawing = read(pdf);
+        QVERIFY(QFile::link(pdf, dir.filePath("link.pdf")));
+        QCOMPARE(runCli({"plumb", "export", pdf, "-o", dir.filePath("link.pdf")}), 1);
+        QCOMPARE(::link(QFile::encodeName(pdf).constData(), QFile::encodeName(dir.filePath("hard.pdf")).constData()), 0);
+        QCOMPARE(runCli({"plumb", "export", pdf, "-o", dir.filePath("hard.pdf")}), 1);
+        QCOMPARE(read(pdf), drawing);
         QCOMPARE(runCli({"plumb", "quantities", dir.filePath("missing.pdf")}), 1);
     }
 
@@ -541,6 +549,12 @@ private:
         for (const QVariant &p : value.toList())
             result.append(p.toPointF());
         return result;
+    }
+
+    static QByteArray read(const QString &path)
+    {
+        QFile file(path);
+        return file.open(QIODevice::ReadOnly) ? file.readAll() : QByteArray();
     }
 
     static void write(const QString &path, const QByteArray &contents)
