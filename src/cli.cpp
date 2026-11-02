@@ -263,9 +263,15 @@ bool isCliCommand(const QString &word) {
 
 int runCli(const QStringList &arguments) {
     const QString command = arguments.value(1);
-    return command == "sheets"       ? sheets(arguments)
-           : command == "quantities" ? quantities(arguments)
-           : command == "export"     ? exportCsv(arguments)
-           : command == "skill"      ? skill(arguments)
-                                     : help(arguments);
+    if (command == "sheets")
+        return sheets(arguments);
+    if (command == "quantities")
+        return quantities(arguments);
+    if (command == "export")
+        return exportCsv(arguments);
+    if (command == "skill")
+        return skill(arguments);
+    if (command.isEmpty() || command == "help")
+        return help(arguments);
+    return fail(QString("Unknown command or file: %1\n\nUsage: plumb <command> [options]\n\n%2").arg(command, cliSummary()));
 }

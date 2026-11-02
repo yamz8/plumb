@@ -2,6 +2,7 @@
 
 #include <QCommandLineParser>
 #include <QDir>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QIcon>
 #include <QQmlApplicationEngine>
@@ -23,8 +24,12 @@ int main(int argc, char *argv[]) {
     // Commands and help draw no window, so they must not need a display, even
     // where the desktop exports QT_QPA_PLATFORM=wayland. Bare plumb prints
     // help, as a command line tool should; the launcher says plumb open.
-    const QByteArray first = argc > 1 ? QByteArray(argv[1]) : QByteArray();
-    const bool command = argc == 1 || isCliCommand(QString::fromLocal8Bit(first));
+    // A word that is neither a command nor a file is a mistyped command, and
+    // gets an error rather than a window a script would wait on forever.
+    const QString first = argc > 1 ? QString::fromLocal8Bit(argv[1]) : QString();
+    const bool mistyped = !first.isEmpty() && first != "open" && !first.startsWith('-') && !isCliCommand(first)
+                          && !QFileInfo::exists(first);
+    const bool command = argc == 1 || isCliCommand(first) || mistyped;
     bool windowless = command;
     for (int i = 1; i < argc; ++i) {
         const QByteArray argument(argv[i]);

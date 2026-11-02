@@ -491,6 +491,10 @@ private slots:
         QCOMPARE(runCli({"plumb", "export", pdf, "-o", dir.filePath("hard.pdf")}), 1);
         QCOMPARE(read(pdf), drawing);
         QCOMPARE(runCli({"plumb", "quantities", dir.filePath("missing.pdf")}), 1);
+        // A mistyped command fails instead of waiting on a window.
+        QCOMPARE(runCli({"plumb", "quantites", pdf}), 1);
+        QCOMPARE(runCli({"plumb"}), 0);
+        QCOMPARE(runCli({"plumb", "help"}), 0);
     }
 
     void themeFallsBack()
