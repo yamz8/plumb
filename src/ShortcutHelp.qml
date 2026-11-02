@@ -49,6 +49,9 @@ Rectangle {
 
     Pane {
         anchors.centerIn: parent
+        // Shrinks to fit a small window or a language with long words,
+        // rather than cut off the shortcuts at the edges.
+        scale: Math.min(1, (help.width - 32) / implicitWidth, (help.height - 32) / implicitHeight)
         padding: 24
         Material.elevation: 8
         Material.roundedScale: theme.radius
