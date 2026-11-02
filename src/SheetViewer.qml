@@ -240,7 +240,10 @@ Item {
     onToolChanged: cancelDraft()
     onActiveItemChanged: cancelDraft()
     onZoomChanged: settle.restart()
-    onFitZoomChanged: if (fitted) fit()
+    // Later, not inside the binding that read fitZoom: the zoom label reads
+    // it, and changing zoom from there is a binding loop.
+    function refit() { if (fitted) fit() }
+    onFitZoomChanged: Qt.callLater(refit)
 
     Connections {
         target: backend
